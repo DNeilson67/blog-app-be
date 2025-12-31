@@ -1,12 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from src.database.database import get_db
 from src.database.models import User, Post
-from src.database.schemas import PostCreate, PostUpdate, PostResponse, MessageResponse
+from src.database.schemas import PostCreate, PostUpdate, PostResponse, MessageResponse, PaginatedPostResponse
 from src.middleware.dependencies import get_current_user
 import uuid
 from datetime import datetime
+import math
 
 router = APIRouter(prefix="/posts", tags=["Posts"])
 
@@ -53,29 +54,59 @@ async def create_post(
     )
 
 
-@router.get("", response_model=List[PostResponse])
-async def get_all_posts(db: Session = Depends(get_db)):
+@router.get("", response_model=PaginatedPostResponse)
+async def get_all_posts(
+    page: int = Query(1, ge=1, description="Page number"),
+    page_size: int = Query(10, ge=1, le=100, description="Number of items per page"),
+    category: Optional[str] = Query(None, description="Filter by category"),
+    db: Session = Depends(get_db)
+):
     """
-    Retrieve all blog posts
+    Retrieve blog posts with pagination
     
-    Returns a list of all posts ordered by creation date (newest first)
+    - **page**: Page number (default: 1)
+    - **page_size**: Number of posts per page (default: 10, max: 100)
+    - **category**: Optional filter by category
+    
+    Returns paginated list of posts ordered by creation date (newest first)
     """
-    posts = db.query(Post).order_by(Post.created_at.desc()).all()
+    # Build query
+    query = db.query(Post)
     
-    return [
-        PostResponse(
-            id=post.id,
-            title=post.title,
-            content=post.content,
-            excerpt=post.excerpt,
-            category=post.category,
-            author_id=post.author_id,
-            author_name=post.author.name,
-            created_at=post.created_at,
-            updated_at=post.updated_at
-        )
-        for post in posts
-    ]
+    # Apply category filter if provided
+    if category:
+        query = query.filter(Post.category == category)
+    
+    # Get total count
+    total = query.count()
+    
+    # Calculate pagination
+    total_pages = math.ceil(total / page_size)
+    offset = (page - 1) * page_size
+    
+    # Get paginated posts
+    posts = query.order_by(Post.created_at.desc()).offset(offset).limit(page_size).all()
+    
+    return PaginatedPostResponse(
+        posts=[
+            PostResponse(
+                id=post.id,
+                title=post.title,
+                content=post.content,
+                excerpt=post.excerpt,
+                category=post.category,
+                author_id=post.author_id,
+                author_name=post.author.name,
+                created_at=post.created_at,
+                updated_at=post.updated_at
+            )
+            for post in posts
+        ],
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=total_pages
+    )
 
 
 @router.get("/{post_id}", response_model=PostResponse)

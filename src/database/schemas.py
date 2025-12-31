@@ -105,3 +105,12 @@ class MessageResponse(BaseModel):
 
 class ErrorResponse(BaseModel):
     detail: str
+
+
+# Pagination Schemas
+class PaginatedPostResponse(BaseModel):
+    posts: list[PostResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
