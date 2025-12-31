@@ -66,6 +66,7 @@ class PostResponse(PostBase):
     id: str
     author_id: str
     author_name: str
+    author_profile_picture: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 
@@ -91,6 +92,7 @@ class CommentResponse(CommentBase):
     post_id: str
     author_id: str
     author_name: str
+    author_profile_picture: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 
@@ -105,12 +107,3 @@ class MessageResponse(BaseModel):
 
 class ErrorResponse(BaseModel):
     detail: str
-
-
-# Pagination Schemas
-class PaginatedPostResponse(BaseModel):
-    posts: list[PostResponse]
-    total: int
-    page: int
-    page_size: int
-    total_pages: int

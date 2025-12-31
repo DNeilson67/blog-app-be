@@ -51,6 +51,7 @@ async def create_comment(
         post_id=new_comment.post_id,
         author_id=new_comment.author_id,
         author_name=current_user.name,
+        author_profile_picture=current_user.profile_picture,
         created_at=new_comment.created_at,
         updated_at=new_comment.updated_at
     )
@@ -80,6 +81,7 @@ async def get_comments_by_post(post_id: str, db: Session = Depends(get_db)):
             post_id=comment.post_id,
             author_id=comment.author_id,
             author_name=comment.author.name,
+            author_profile_picture=comment.author.profile_picture,
             created_at=comment.created_at,
             updated_at=comment.updated_at
         )
@@ -127,6 +129,7 @@ async def update_comment(
         post_id=comment.post_id,
         author_id=comment.author_id,
         author_name=comment.author.name,
+        author_profile_picture=comment.author.profile_picture,
         created_at=comment.created_at,
         updated_at=comment.updated_at
     )
