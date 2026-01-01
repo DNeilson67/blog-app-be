@@ -1,114 +1,144 @@
-# Blog API Backend
+# Blog Application - Backend API
 
-A FastAPI-based RESTful API for a blog application with user authentication, posts, and comments.
+A production-ready FastAPI-based RESTful API for a blog application with comprehensive user authentication, post management, and commenting features. Built with modern Python async patterns, SQLAlchemy ORM, and PostgreSQL.
 
-## Features
+## Prerequisites
 
-- **User Authentication**: JWT-based authentication with bcrypt password hashing
-- **Post Management**: Full CRUD operations for blog posts
-- **Comment Management**: Full CRUD operations for comments
-- **Authorization**: Role-based access control (only authors can edit/delete their content)
-- **API Documentation**: Automatic Swagger/OpenAPI documentation
-- **PostgreSQL Database**: Using SQLAlchemy ORM
+Before running this project, ensure you have:
 
-## Setup
+- **Python** 3.8 or higher
+- **PostgreSQL** database server
+- **pip** package manager
 
-### Prerequisites
+## Project Setup
 
-- Python 3.8+
-- PostgreSQL database
+### 1. Clone and Navigate
 
-### Installation
+```bash
+cd blog-app-be
+```
 
-1. Install dependencies:
+### 2. Create Virtual Environment (Recommended)
+
+```bash
+# Windows
+python -m venv venv
+venv\Scripts\activate
+
+# Linux/Mac
+python3 -m venv venv
+source venv/bin/activate
+```
+
+### 3. Install Dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
-2. Configure environment variables:
-   - Copy `.env.example` to `.env`
-   - Update the `DATABASE_URL` with your PostgreSQL credentials
-   - Update the `SECRET_KEY` for JWT token generation
+### 4. Configure Environment Variables
 
-3. Run the application:
+Create a `.env` file in the root directory (can be copied from .env.example):
+
+```env
+# Database Configuration
+DATABASE_URL=postgresql://username:password@localhost:5432/blog_db
+
+# JWT Configuration
+SECRET_KEY=your-secret-key-here-generate-with-openssl-rand-hex-32
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# CORS Configuration (optional)
+ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+```
+
+### 5. Run the Application
+
 ```bash
 uvicorn main:app --reload
 ```
 
-The API will be available at `http://localhost:8000`
+The API will be available at: **http://localhost:8000**
+
+## Project Structure
+
+```
+blog-app-be/
+├── main.py                       # Application entry point and FastAPI setup
+├── requirements.txt              # Python dependencies
+├── .env                          # Environment configuration (not in git)
+└── src/
+    ├── config/
+    │   └── settings.py           # Configuration and environment variables
+    ├── database/
+    │   ├── database.py           # Database connection and session management
+    │   ├── models.py             # SQLAlchemy ORM models
+    │   └── schemas.py            # Pydantic request/response schemas
+    ├── middleware/
+    │   ├── auth.py               # Password hashing and JWT utilities
+    │   └── dependencies.py       # FastAPI dependency injection
+    └── routes/
+        ├── auth.py               # Authentication endpoints
+        ├── posts.py              # Post management endpoints
+        ├── comments.py           # Comment management endpoints
+        └── users.py              # User profile endpoints
+```
 
 ## API Documentation
 
-Once the server is running, access the interactive API documentation at:
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
+Once the server is running, access the interactive API documentation:
 
-## API Endpoints
+- **Swagger UI**: [http://localhost:8000/docs](http://localhost:8000/docs)
+  - Interactive API testing interface
+  - Try out endpoints directly from browser
 
-### Authentication
-- `POST /auth/register` - Register a new user
-- `POST /auth/login` - Login with email and password
-- `POST /auth/logout` - Logout (client-side token invalidation)
-
-### Posts
-- `POST /posts` - Create a new post (authenticated)
-- `GET /posts` - Get all posts
-- `GET /posts/{id}` - Get a specific post by ID
-- `PUT /posts/{id}` - Update a post (author only)
-- `DELETE /posts/{id}` - Delete a post (author only)
-
-### Comments
-- `POST /posts/{id}/comments` - Add a comment to a post (authenticated)
-- `GET /posts/{id}/comments` - Get all comments for a post
-- `PUT /comments/{id}` - Update a comment (author only)
-- `DELETE /comments/{id}` - Delete a comment (author only)
-
-### Users
-- `GET /users/me` - Get current user profile (authenticated)
-- `PUT /users/me` - Update current user profile (authenticated)
-- `GET /users/me/posts` - Get all posts by current user (authenticated)
 
 ## Database Schema
 
-### Users
-- `id` (String, Primary Key)
-- `email` (String, Unique)
-- `password` (String, Hashed)
-- `name` (String)
-- `profile_picture` (String, Optional)
-- `created_at` (DateTime)
+### Users Table
+| Column | Type | Constraints |
+|--------|------|-------------|
+| id | String (UUID) | Primary Key |
+| email | String | Unique, Not Null |
+| password | String (Hashed) | Not Null |
+| name | String | Not Null |
+| profile_picture | String | Nullable |
+| created_at | DateTime | Not Null |
 
-### Posts
-- `id` (String, Primary Key)
-- `title` (String)
-- `content` (Text)
-- `excerpt` (String, Optional)
-- `category` (String, Optional)
-- `author_id` (String, Foreign Key)
-- `created_at` (DateTime)
-- `updated_at` (DateTime)
+### Posts Table
+| Column | Type | Constraints |
+|--------|------|-------------|
+| id | String (UUID) | Primary Key |
+| title | String | Not Null |
+| content | Text | Not Null |
+| excerpt | String | Nullable |
+| category | String | Nullable |
+| author_id | String (UUID) | Foreign Key → users.id |
+| created_at | DateTime | Not Null |
+| updated_at | DateTime | Not Null |
 
-### Comments
-- `id` (String, Primary Key)
-- `content` (Text)
-- `post_id` (String, Foreign Key)
-- `author_id` (String, Foreign Key)
-- `created_at` (DateTime)
-- `updated_at` (DateTime)
+### Comments Table
+| Column | Type | Constraints |
+|--------|------|-------------|
+| id | String (UUID) | Primary Key |
+| content | Text | Not Null |
+| post_id | String (UUID) | Foreign Key → posts.id |
+| author_id | String (UUID) | Foreign Key → users.id |
+| created_at | DateTime | Not Null |
+| updated_at | DateTime | Not Null |
 
-## Error Handling
+## How to Interact with the API
 
-The API returns appropriate HTTP status codes and error messages:
-- `400 Bad Request` - Invalid request data
-- `401 Unauthorized` - Invalid or missing authentication
-- `403 Forbidden` - Insufficient permissions
-- `404 Not Found` - Resource not found
-- `422 Unprocessable Entity` - Validation error
-- `500 Internal Server Error` - Server error
+1. Start the server: `uvicorn main:app --reload`
+2. Navigate to [http://localhost:8000/docs](http://localhost:8000/docs)
+3. Register a user via `/auth/register`
+4. Login via `/auth/login` to get JWT token
+5. Click "Authorize" button and enter your JWT token.
+6. Now you can test all authenticated endpoints
 
-## Security
+## Design Decisions and Assumptions
 
-- Passwords are hashed using bcrypt
-- JWT tokens for authentication
-- Authorization checks for edit/delete operations
-- CORS configured for frontend integration
+This backend uses FastAPI for a modern, high-performance, async API with automatic documentation and built-in validation via Pydantic. Data is stored in PostgreSQL, a reliable and scalable relational database, accessed through SQLAlchemy to provide a secure, database-agnostic ORM layer. Authentication is handled with JWT, enabling stateless and scalable user sessions, while passwords are securely hashed using bcrypt directly for better control and compatibility. UUIDs are used as primary keys to prevent ID-guessing and improve data safety.
+
+The system assumes simple authentication and authorization: tokens expire after 30 minutes, there is no refresh token, email verification, or password reset, and only content authors can edit or delete their own posts. Validation and moderation are minimal, with no pagination, caching, admin roles, or content approval, making it suitable for small to medium datasets. Deployment targets common cloud platforms using environment variables, automatic table creation, and default logging, with limited data integrity features such as no cascade deletes, soft deletes, or audit trails.
