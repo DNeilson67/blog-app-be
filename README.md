@@ -133,9 +133,13 @@ Once the server is running, access the interactive API documentation:
 1. Start the server: `uvicorn main:app --reload`
 2. Navigate to [http://localhost:8000/docs](http://localhost:8000/docs)
 3. Register a user via `/auth/register`
-4. Login via `/auth/login` to get JWT token
-5. Click "Authorize" button and enter your JWT token.
-6. Now you can test all authenticated endpoints
+4. Login via `/auth/login` to get JWT token, you can use the demo credential below:
+```
+email: john@example.com
+password: password123
+```
+6. Click "Authorize" button and enter your JWT token.
+7. Now you can test all authenticated endpoints
 
 ## Design Decisions and Assumptions
 
